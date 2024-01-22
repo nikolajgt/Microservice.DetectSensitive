@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Microservice.Domain.Models;
+namespace Microservice.JobScheduler.Models;
 
 public class BaseEntity
 {
-    public virtual Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.NewGuid();
 }

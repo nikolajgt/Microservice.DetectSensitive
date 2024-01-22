@@ -2,11 +2,6 @@
 using Microservice.Domain.Enums;
 using Microservice.Domain.Models.Scheduler;
 using Microservice.Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microservice.JobScheduler.Infrastructure.Database;
 using Microservice.JobScheduler.Application.Extensions;
 
@@ -68,29 +63,36 @@ public class JobSchedulerService
 
     public async Task<JobHistory> DequeueNextReadyJobAsync(HarvesterType harvesterType, CancellationToken cancellationToken)
     {
-        var nextJob = _jobQueue
-            .Where(x => x.JobType.IsExchangeOrFileSystem() == harvesterType)
-            .OrderByDescending(j => j.Force)
-            .ThenBy(j => j.LastRun)
-            .Select(j =>
-            {
-                j.LastRun = DateTime.UtcNow;
-                j.JobStatus = JobStatus.Processing;
-                j.Force = false;
-                return new JobHistory(j);
-            })
-            .FirstOrDefault();
-
-        if (nextJob is null)
+        try
         {
-            _logger.LogInformation("JobScheduler do no thave any jobs ready");
+            var nextJob = _jobQueue
+           .Where(x => x.JobType.IsExchangeOrFileSystem() == harvesterType)
+           .OrderByDescending(j => j.Force)
+           .ThenBy(j => j.LastRun)
+           .Select(j =>
+           {
+               j.LastRun = DateTime.UtcNow;
+               j.JobStatus = JobStatus.Processing;
+               j.Force = false;
+               return new JobHistory(j);
+           })
+           .FirstOrDefault();
+
+            if (nextJob is null)
+            {
+                _logger.LogInformation("JobScheduler do no thave any jobs ready");
+            }
+
+            await _dbService.StartJobAsync(nextJob!, cancellationToken);
+            _logger.LogInformation("JobScheduler have started job [{JobId}] [{jobType}]", nextJob.JobId, nextJob.Job.JobType);
+            return nextJob;
         }
-
-        await _dbService.StartJobAsync(nextJob, cancellationToken);
-        _logger.LogInformation("JobScheduler have started job [{JobId}] [{jobType}]", nextJob.JobId, nextJob.Job.JobType);
-        return nextJob;
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, "Error at DequeueNextReadyJobAsync in JobSchedulerService");
+            return null;
+        }
     }
-
 
 
     public void CheckReadyJobs()
@@ -112,13 +114,21 @@ public class JobSchedulerService
 
     public async Task UpdateJobHistory(Guid jobHistoryId, CancellationToken cancellationToken)
     {
-        var jobHistory = _activeJobs.FirstOrDefault(x => x.Id == jobHistoryId);
-        if(jobHistory == null)
+        try
         {
-            _logger.LogError("Job has been removed from Jobscheduler but got new UpdateJobHistoryid call with Jobhistory id {Jobhistoryid}", jobHistoryId);
-        }
+            var jobHistory = _activeJobs.FirstOrDefault(x => x.Id == jobHistoryId);
+            if (jobHistory is null)
+            {
+                _logger.LogError("Job has been removed from Jobscheduler but got new UpdateJobHistoryid call with Jobhistory id {Jobhistoryid}", jobHistoryId);
+            }
 
-        await _dbService.FinishJobAsync(jobHistory!, cancellationToken);
+            _activeJobs.Remove(jobHistory!);
+            await _dbService.FinishJobAsync(jobHistory!, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error at UpdateJobHistory in  JobSchedulerservice");
+        }
     }
 
     private async Task SyncJobsDatabase(IServiceProvider sp, CancellationToken cancellationToken)

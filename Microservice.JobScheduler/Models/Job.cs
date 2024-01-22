@@ -1,5 +1,6 @@
 ﻿using Microservice.Domain.Enums;
 using Microservice.Domain.Models.Scheduler;
+using Microservice.JobScheduler.Models;
 
 namespace Microservice.Domain.Models;
 

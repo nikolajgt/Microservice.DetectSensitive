@@ -1,5 +1,5 @@
-﻿using Microservice.Domain.Base;
-using Microservice.Domain.Base.Enums;
+﻿using Microservice.Domain.Base.Enums;
+using Microservice.JobScheduler.Models;
 using System.ComponentModel.DataAnnotations;
 
 
