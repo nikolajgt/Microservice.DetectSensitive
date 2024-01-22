@@ -9,4 +9,5 @@ namespace Microservice.Domain.Models.JobModels;
 public class JobFinishedResponse
 {
     public Guid JobHistoryId { get; set; }
+    public bool Success { get; set; } = true;
 }

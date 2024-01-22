@@ -110,6 +110,17 @@ public class JobSchedulerService
         await _dbService.FinishJobAsync(jobHistory, cancellationToken);
     }
 
+    public async Task UpdateJobHistory(Guid jobHistoryId, CancellationToken cancellationToken)
+    {
+        var jobHistory = _activeJobs.FirstOrDefault(x => x.Id == jobHistoryId);
+        if(jobHistory == null)
+        {
+            _logger.LogError("Job has been removed from Jobscheduler but got new UpdateJobHistoryid call with Jobhistory id {Jobhistoryid}", jobHistoryId);
+        }
+
+        await _dbService.FinishJobAsync(jobHistory!, cancellationToken);
+    }
+
     private async Task SyncJobsDatabase(IServiceProvider sp, CancellationToken cancellationToken)
     {
         var dbService = sp.GetRequiredService<DatabaseService>();

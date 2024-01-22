@@ -10,4 +10,9 @@ namespace Microservice.JobScheduler.Application.Validation;
 
 internal class JobFinishedResponseValidator : AbstractValidator<JobFinishedResponse>
 {
+    public JobFinishedResponseValidator()
+    {
+        RuleFor(t => t.JobHistoryId).NotEmpty();
+        RuleFor(t => t.Success).NotEmpty();
+    }
 }

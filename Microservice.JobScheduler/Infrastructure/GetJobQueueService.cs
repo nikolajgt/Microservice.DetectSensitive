@@ -75,7 +75,7 @@ internal class GetJobQueueService : IDisposable
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in RabbitMQService SetupRequestListener");
+                _logger.LogError(ex, "Error in GetJobQueueService SetupRequestListener");
             }
         };
         _requestChannel.BasicConsume(queue: _rabbitMQ.jobSchedulerRequestQueueName, autoAck: true, consumer: consumer);
