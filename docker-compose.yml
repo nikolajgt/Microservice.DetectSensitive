@@ -1,0 +1,15 @@
+version: '3.4'
+
+services:
+  microservice.jobscheduler:
+    image: ${DOCKER_REGISTRY-}microservicejobscheduler
+    build:
+      context: .
+      dockerfile: Microservice.JobScheduler/Dockerfile
+
+  microservice.taskqueuemanager:
+    image: ${DOCKER_REGISTRY-}microservicetaskqueuemanager
+    build:
+      context: .
+      dockerfile: Microservice.TaskQueueManager/Dockerfile
+
