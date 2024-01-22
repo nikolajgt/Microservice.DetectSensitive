@@ -5,7 +5,7 @@ using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Threading.Channels;
 
-namespace Microservice.JobScheduler.Infrastructure;
+namespace Microservice.JobScheduler.Infrastructure.QueueListeners;
 
 internal class GetJobQueueService : IDisposable
 {
@@ -69,7 +69,7 @@ internal class GetJobQueueService : IDisposable
                 var responseSerialized = MessagePackSerializer.Serialize(response);
                 _responseChannel.BasicPublish(
                     exchange: _rabbitMQ.exchange,
-                    routingKey: _rabbitMQ.jobSchedulerResponseQueueName,
+                    routingKey: _rabbitMQ.getResponseQueueName,
                     basicProperties: null,
                     body: responseSerialized);
             }
@@ -78,7 +78,7 @@ internal class GetJobQueueService : IDisposable
                 _logger.LogError(ex, "Error in GetJobQueueService SetupRequestListener");
             }
         };
-        _requestChannel.BasicConsume(queue: _rabbitMQ.jobSchedulerRequestQueueName, autoAck: true, consumer: consumer);
+        _requestChannel.BasicConsume(queue: _rabbitMQ.getRequestQueueName, autoAck: true, consumer: consumer);
     }
 
     public void Dispose()

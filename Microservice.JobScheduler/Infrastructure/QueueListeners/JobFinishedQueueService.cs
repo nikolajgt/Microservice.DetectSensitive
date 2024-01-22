@@ -5,7 +5,7 @@ using Microservice.JobScheduler.Application.Validation;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace Microservice.JobScheduler.Infrastructure;
+namespace Microservice.JobScheduler.Infrastructure.QueueListeners;
 
 
 internal class JobFinishedQueueService : IDisposable
@@ -17,7 +17,6 @@ internal class JobFinishedQueueService : IDisposable
     private readonly JobSchedulerService _jobSchedulerService;
     private readonly RabbitMQService _rabbitMQ;
 
-    private IModel? _requestChannel;
     private IModel? _responseChannel;
 
     public JobFinishedQueueService(
@@ -29,7 +28,6 @@ internal class JobFinishedQueueService : IDisposable
         _logger = logger;
         _rabbitMQ = rabbitMQ;
         _jobSchedulerService = jobSchedulerService;
-        _requestChannel = _rabbitMQ.GetConnection();
         _responseChannel = _rabbitMQ.GetConnection();
         SetupJobFinishedResponseListener(lifetime.ApplicationStopping);
     }
@@ -37,7 +35,7 @@ internal class JobFinishedQueueService : IDisposable
 
     private void SetupJobFinishedResponseListener(CancellationToken cancellationToken)
     {
-        var consumer = new EventingBasicConsumer(_requestChannel);
+        var consumer = new EventingBasicConsumer(_responseChannel);
         consumer.Received += async (model, ea) =>
         {
             try
@@ -60,14 +58,12 @@ internal class JobFinishedQueueService : IDisposable
                 _logger.LogError(ex, "Error in JobFinishedQueueService SetupRequestAndResponseListener");
             }
         };
-        _requestChannel.BasicConsume(queue: _rabbitMQ.jobSchedulerRequestQueueName, autoAck: true, consumer: consumer);
+        _responseChannel.BasicConsume(queue: _rabbitMQ.getRequestQueueName, autoAck: true, consumer: consumer);
     }
 
 
     public void Dispose()
     {
-        _requestChannel?.Close();
-        _requestChannel?.Dispose();
         _responseChannel?.Close();
         _responseChannel?.Dispose();
     }

@@ -5,6 +5,7 @@ using Microservice.JobScheduler.Application.Validation;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 using System.IO;
 using System.Threading.Channels;
 
@@ -15,10 +16,12 @@ internal class RabbitMQService
 {
     private readonly ILogger<RabbitMQService> _logger;
     private readonly JobSchedulerService _jobSchedulerService;
-    private readonly ConnectionFactory _connectionFactory;
+    private readonly IConnection _connection;
     public string exchange { get; } = "DataHarvest";
-    public string jobSchedulerRequestQueueName { get; } = "DataHarvest_JobSchedulerRequestQueue";
-    public string jobSchedulerResponseQueueName { get; } = "DataHarvest_JobSchedulerRequestResponseQueue";
+    public string getRequestQueueName { get; } = "DataHarvest_JobSchedulerGetRequestQueue";
+    public string getResponseQueueName { get; } = "DataHarvest_JobSchedulerGetResponseQueue";
+    public string jobFinishedResponseQueueName { get; } = "DataHarvest_JobSchedulerGetResponseQueue";
+
     public RabbitMQService(
         ILogger<RabbitMQService> logger,
         JobSchedulerService jobSchedulerService,
@@ -26,27 +29,27 @@ internal class RabbitMQService
     {
         _logger = logger;
         _jobSchedulerService = jobSchedulerService;
-        _connectionFactory = new ConnectionFactory
+        var connectionFactory = new ConnectionFactory
         {
             HostName = "localhost", // RabbitMQ server host
             Port = 5672,            // RabbitMQ server port
             UserName = "guest",     // RabbitMQ username
             Password = "guest"      // RabbitMQ password
         };
-
-        var _requestChannel = _connectionFactory.CreateConnection().CreateModel();
-        var _responseChannel = _connectionFactory.CreateConnection().CreateModel();
+        _connection = connectionFactory.CreateConnection();
+        var _requestChannel = _connection.CreateModel();
+        var _responseChannel = _connection.CreateModel();
 
         // Gets ignored if already exists
         _requestChannel.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
         // Queues to get messages out to harvester
-        _requestChannel.QueueDeclare(queue: jobSchedulerRequestQueueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-        _responseChannel.QueueDeclare(queue: jobSchedulerResponseQueueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
+        _requestChannel.QueueDeclare(queue: getRequestQueueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
+        _responseChannel.QueueDeclare(queue: getResponseQueueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
     }
 
     public IModel GetConnection()
     {
-        return _connectionFactory.CreateConnection().CreateModel();
+        return _connection.CreateModel();
     }
 
 }
