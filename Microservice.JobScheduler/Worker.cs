@@ -1,4 +1,5 @@
 using Microservice.JobScheduler.Infrastructure;
+using Microservice.JobScheduler.Infrastructure.QueueListeners;
 
 namespace Microservice;
 
@@ -9,26 +10,35 @@ public class Worker : BackgroundService
 
     public Worker(
         ILogger<Worker> logger,
-        JobSchedulerService service)
+        JobSchedulerService jobSchedulerService,
+         GetJobQueueListenerService listner)
     {
+        _jobSchedulerService = jobSchedulerService;
         _logger = logger;
-        _jobSchedulerService = service;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
+            try
             {
-                var jobs = _jobSchedulerService.GetAciveJobs();
-                foreach (var job in jobs)
+                _logger.LogInformation("JobScheduler Worker running at: {time}", DateTimeOffset.Now);
+
+                if (_logger.IsEnabled(LogLevel.Information))
                 {
-                    _logger.LogInformation("Job history id: {jobhistoryid} is running", job.Id);
+                    var jobs = _jobSchedulerService.GetAciveJobs();
+                    foreach (var job in jobs)
+                    {
+                        _logger.LogInformation("Job history id: {jobhistoryid} is running", job.Id);
+                    }
                 }
+                await Task.Delay(1000, stoppingToken);
             }
-            await Task.Delay(1000, stoppingToken);
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error in Worker Jobscheduler");
+            }
         }
     }
 }

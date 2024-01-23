@@ -58,7 +58,7 @@ internal class JobFinishedQueueListenerService : IDisposable
                 _logger.LogError(ex, "Error in JobFinishedQueueService SetupRequestAndResponseListener");
             }
         };
-        _responseChannel.BasicConsume(queue: _rabbitMQ.getRequestQueueName, autoAck: true, consumer: consumer);
+        _responseChannel.BasicConsume(queue: _rabbitMQ.QueueRespondFinishedJob, autoAck: true, consumer: consumer);
     }
 
 

@@ -3,7 +3,7 @@
 
 namespace Microservice.Domain.Models.TaskQueueManager;
 
-
+[MessagePackObject]
 public class HarvesterResponse
 {
     [Key(0)]

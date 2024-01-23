@@ -17,10 +17,11 @@ public partial class DatabaseService : IDisposable, IAsyncDisposable
     private SqlTransaction? _transaction;
 
     public DatabaseService(
-        ILogger<DatabaseService> logger)
+        ILogger<DatabaseService> logger,
+        JobSchedulerConfig config)
     {
-        _connectionString = "Server=NIKOLAJGT;Database=Svende;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True;";
-        _connection = new SqlConnection(_connectionString);
+        _connection = new SqlConnection(config.ConnectionString);
+        _connectionString = config.ConnectionString;
         _logger = logger;
     }
 

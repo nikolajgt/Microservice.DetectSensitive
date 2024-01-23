@@ -10,7 +10,6 @@ namespace Microservice.Domain.Enums;
 [Flags]
 public enum JobType
 {
-    None = 0,
     ExchangeGenerateJobs = 1 << 0,
     ExchangeScanItems = 1 << 1,
     ExchangeProcessActions = 1 << 2,

@@ -2,7 +2,7 @@
 
 namespace Microservice.Domain.Models.TaskQueueManager;
 
-
+[MessagePackObject]
 public class TaskWorkResponse
 {
     [Key(0)]

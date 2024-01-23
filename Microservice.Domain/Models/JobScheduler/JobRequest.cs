@@ -1,14 +1,12 @@
-﻿using Microservice.Domain.Base.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using MessagePack;
+using Microservice.Domain.Base.Enums;
+
 
 namespace Microservice.Domain;
-
+[MessagePackObject]
 public class JobRequest
 {
+    [Key(0)]
     public HarvesterType HarvesterType { get; set; }
 }
 

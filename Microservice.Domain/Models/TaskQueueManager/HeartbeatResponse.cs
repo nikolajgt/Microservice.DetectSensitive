@@ -2,7 +2,7 @@
 using Microservice.Domain.Base.Enums;
 
 namespace Microservice.Domain.Models.TaskQueueManager;
-
+[MessagePackObject]
 public class HeartbeatResponse
 {
     [Key(0)]

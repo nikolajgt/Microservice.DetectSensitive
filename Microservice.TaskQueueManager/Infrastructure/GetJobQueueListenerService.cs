@@ -1,4 +1,5 @@
 ﻿using MessagePack;
+using MessagePack.Resolvers;
 using Microservice.Domain;
 using Microservice.Domain.Models.JobModels;
 using Microservice.TaskQueueManage.Infrastructure;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Microservice.TaskManagQueueManager.Infrastructure;
 
-internal class GetJobQueueListenerService
+public class GetJobQueueListenerService
 {
     private readonly ILogger<GetJobQueueListenerService> _logger;
 
@@ -33,6 +34,10 @@ internal class GetJobQueueListenerService
         _rabbitMQ = rabbitMQ;
         _requestChannel = _rabbitMQ.GetConnection();
         _responseChannel = _rabbitMQ.GetConnection();
+        _requestChannel.ExchangeDeclare(exchange: _rabbitMQ.exchange, type: ExchangeType.Direct);
+        _responseChannel.ExchangeDeclare(exchange: _rabbitMQ.exchange, type: ExchangeType.Direct);
+        _requestChannel.QueueDeclare(queue: _rabbitMQ.QueueRequestReadyJob, durable: false, exclusive: false, autoDelete: false, arguments: null);
+        _responseChannel.QueueDeclare(queue: _rabbitMQ.QueueRespondReadyJob, durable: false, exclusive: false, autoDelete: false, arguments: null);
         SetupResponseListener(lifetime.ApplicationStopping);
     }
 
@@ -40,16 +45,17 @@ internal class GetJobQueueListenerService
     {
         try
         {
-            var requestSerialized = MessagePackSerializer.Serialize(jobRequest);
+            var options = MessagePackSerializerOptions.Standard.WithResolver(ContractlessStandardResolver.Instance);
+            var requestSerialized = MessagePackSerializer.Serialize(jobRequest, options);
             _requestChannel.BasicPublish(
                 exchange: _rabbitMQ.exchange,
-                routingKey: _rabbitMQ.getRequestQueueName,
+                routingKey: _rabbitMQ.QueueRequestReadyJob,
                 basicProperties: null,
                 body: requestSerialized);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending job request");
+            _logger.LogError(ex, "Error sending job request at SendJobRequestAsync in GetJobQueueListenerService");
         }
     }
 
@@ -71,7 +77,7 @@ internal class GetJobQueueListenerService
                 _logger.LogError(ex, "Error in GetJobQueueService response listener");
             }
         };
-        _responseChannel.BasicConsume(queue: _rabbitMQ.getResponseQueueName, autoAck: true, consumer: responseConsumer);
+        _responseChannel.BasicConsume(queue: _rabbitMQ.QueueRespondReadyJob, autoAck: true, consumer: responseConsumer);
     }
 
     private async Task SimulateWork(JobResponse jobResponse)
@@ -79,16 +85,20 @@ internal class GetJobQueueListenerService
         _logger.LogInformation("JobhistoryId {JobhistoryId} with Address {Address} has begun processing", jobResponse.JobHistoryId, jobResponse.Address);
         await Task.Delay(TimeSpan.FromSeconds(10));
         _logger.LogInformation("JobhistoryId {JobhistoryId} with Address {Address} has finished processing", jobResponse.JobHistoryId, jobResponse.Address);
-
+        //UpdateJob(new JobFinishedResponse
+        //{
+        //    JobHistoryId = jobResponse.JobHistoryId,
+        //    Success = true,
+        //});
     }
 
-    private void UpdateJob(JobFinishedResponse response)
-    {
-        var requestSerialized = MessagePackSerializer.Serialize(response);
-        _requestChannel.BasicPublish(
-            exchange: _rabbitMQ.exchange,
-            routingKey: _rabbitMQ.jobFinishedResponseQueueName,
-            basicProperties: null,
-            body: requestSerialized);
-    }
+    //private void UpdateJob(JobFinishedResponse response)
+    //{
+    //    var requestSerialized = MessagePackSerializer.Serialize(response);
+    //    _requestChannel.BasicPublish(
+    //        exchange: _rabbitMQ.exchange,
+    //        routingKey: _rabbitMQ.QueueRespondFinishedJob,
+    //        basicProperties: null,
+    //        body: requestSerialized);
+    //}
 }
