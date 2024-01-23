@@ -1,12 +1,10 @@
 ﻿using Microservice.Domain.Enums;
 using Microservice.Domain.Models.Scheduler;
-using Microservice.JobScheduler.Models;
 
 namespace Microservice.Domain.Models;
 
 public class Job : BaseEntity
 {
-
     public string JobName { get; set; }
     public JobType JobType { get; set; }
     public JobStatus JobStatus { get; set; }

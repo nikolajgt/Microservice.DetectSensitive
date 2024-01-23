@@ -1,19 +1,21 @@
 ﻿using MessagePack;
 using Microservice.Domain;
+using Microservice.Domain.Models.JobModels;
 using Microservice.TaskQueueManage.Infrastructure;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Microservice.TaskManagQueueManager.Infrastructure;
 
-internal class GetJobQueueService
+internal class GetJobQueueListenerService
 {
-    private readonly ILogger<GetJobQueueService> _logger;
+    private readonly ILogger<GetJobQueueListenerService> _logger;
 
     private readonly RabbitMQService _rabbitMQ;
 
@@ -22,8 +24,8 @@ internal class GetJobQueueService
 
     public int _activeJobs { get; set; }
 
-    public GetJobQueueService(
-        ILogger<GetJobQueueService> logger,
+    public GetJobQueueListenerService(
+        ILogger<GetJobQueueListenerService> logger,
         RabbitMQService rabbitMQ,
         IHostApplicationLifetime lifetime)
     {
@@ -31,7 +33,7 @@ internal class GetJobQueueService
         _rabbitMQ = rabbitMQ;
         _requestChannel = _rabbitMQ.GetConnection();
         _responseChannel = _rabbitMQ.GetConnection();
-        SetupRequestAndResponseListener(lifetime.ApplicationStopping);
+        SetupResponseListener(lifetime.ApplicationStopping);
     }
 
     public void SendJobRequestAsync(JobRequest jobRequest)
@@ -51,7 +53,7 @@ internal class GetJobQueueService
         }
     }
 
-    private void SetupRequestAndResponseListener(CancellationToken cancellationToken)
+    private void SetupResponseListener(CancellationToken cancellationToken)
     {
         var responseConsumer = new EventingBasicConsumer(_responseChannel);
         responseConsumer.Received += async (model, ea) =>
@@ -61,8 +63,8 @@ internal class GetJobQueueService
                 var response = await MessagePackSerializer
                     .DeserializeAsync<JobResponse>(new MemoryStream(ea.Body.ToArray()));
 
-                // Process the received response
-                // For example, updating job status, logging, etc.
+                // Corrct way, delegate the incomming request to correct queue
+                await SimulateWork(response);
             }
             catch (Exception ex)
             {
@@ -76,7 +78,17 @@ internal class GetJobQueueService
     {
         _logger.LogInformation("JobhistoryId {JobhistoryId} with Address {Address} has begun processing", jobResponse.JobHistoryId, jobResponse.Address);
         await Task.Delay(TimeSpan.FromSeconds(10));
-        _logger.LogInformation("JobhistoryId {JobhistoryId} with Address {Address} has stopped processing", jobResponse.JobHistoryId, jobResponse.Address);
+        _logger.LogInformation("JobhistoryId {JobhistoryId} with Address {Address} has finished processing", jobResponse.JobHistoryId, jobResponse.Address);
 
+    }
+
+    private void UpdateJob(JobFinishedResponse response)
+    {
+        var requestSerialized = MessagePackSerializer.Serialize(response);
+        _requestChannel.BasicPublish(
+            exchange: _rabbitMQ.exchange,
+            routingKey: _rabbitMQ.jobFinishedResponseQueueName,
+            basicProperties: null,
+            body: requestSerialized);
     }
 }

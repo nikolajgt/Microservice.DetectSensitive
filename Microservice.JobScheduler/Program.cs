@@ -9,8 +9,8 @@ builder.Services.AddTransient<DatabaseService>();
 builder.Services.AddSingleton<JobSchedulerService>();
 builder.Services.AddSingleton<RabbitMQService>();
 
-builder.Services.AddSingleton<GetJobQueueService>();
-builder.Services.AddSingleton<JobFinishedQueueService>();
+builder.Services.AddSingleton<GetJobQueueListenerService>();
+builder.Services.AddSingleton<JobFinishedQueueListenerService>();
 
 builder.Services.AddHostedService<Worker>();
 

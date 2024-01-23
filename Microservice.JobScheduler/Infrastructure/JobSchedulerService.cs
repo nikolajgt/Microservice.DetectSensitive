@@ -35,6 +35,9 @@ public class JobSchedulerService
         });
     }
 
+    // makes it a unique collection 
+    public List<JobHistory> GetAciveJobs() => _activeJobs.ToList(); 
+
     public async Task<JobHistory> DequeueNextReadyJobAsync(CancellationToken cancellationToken)
     {
         var nextJob = _jobQueue

@@ -7,9 +7,9 @@ using System.Threading.Channels;
 
 namespace Microservice.JobScheduler.Infrastructure.QueueListeners;
 
-internal class GetJobQueueService : IDisposable
+internal class GetJobQueueListenerService : IDisposable
 {
-    private readonly ILogger<GetJobQueueService> _logger;
+    private readonly ILogger<GetJobQueueListenerService> _logger;
 
     private readonly JobRequestValidator _jobRequestValidator = new JobRequestValidator();
     private readonly JobResponseValidator _jobResponseValidator = new JobResponseValidator();
@@ -20,8 +20,8 @@ internal class GetJobQueueService : IDisposable
     private IModel? _requestChannel;
     private IModel? _responseChannel;
 
-    public GetJobQueueService(
-        ILogger<GetJobQueueService> logger,
+    public GetJobQueueListenerService(
+        ILogger<GetJobQueueListenerService> logger,
         RabbitMQService rabbitMQ,
         JobSchedulerService jobSchedulerService,
         IHostApplicationLifetime lifetime)

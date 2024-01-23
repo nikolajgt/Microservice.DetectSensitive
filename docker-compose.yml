@@ -1,14 +1,24 @@
 version: '3.4'
 
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
   microservice.jobscheduler:
     image: ${DOCKER_REGISTRY-}microservicejobscheduler
+    depends_on:
+      - rabbitmq
     build:
       context: .
       dockerfile: Microservice.JobScheduler/Dockerfile
 
   microservice.taskqueuemanager:
     image: ${DOCKER_REGISTRY-}microservicetaskqueuemanager
+    depends_on:
+      - rabbitmq
     build:
       context: .
       dockerfile: Microservice.TaskQueueManager/Dockerfile

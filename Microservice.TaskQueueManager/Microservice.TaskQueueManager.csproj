@@ -16,10 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Application\Validation\" />
+    <ProjectReference Include="..\Microservice.Domain\Microservice.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Microservice.Domain\Microservice.Domain.csproj" />
+    <Folder Include="Application\Validation\" />
   </ItemGroup>
 </Project>

@@ -8,9 +8,9 @@ using RabbitMQ.Client.Events;
 namespace Microservice.JobScheduler.Infrastructure.QueueListeners;
 
 
-internal class JobFinishedQueueService : IDisposable
+internal class JobFinishedQueueListenerService : IDisposable
 {
-    private readonly ILogger<GetJobQueueService> _logger;
+    private readonly ILogger<GetJobQueueListenerService> _logger;
 
     private readonly JobFinishedResponseValidator _jobResponseValidator = new JobFinishedResponseValidator();
 
@@ -19,8 +19,8 @@ internal class JobFinishedQueueService : IDisposable
 
     private IModel? _responseChannel;
 
-    public JobFinishedQueueService(
-        ILogger<GetJobQueueService> logger,
+    public JobFinishedQueueListenerService(
+        ILogger<GetJobQueueListenerService> logger,
         RabbitMQService rabbitMQ,
         JobSchedulerService jobSchedulerService,
         IHostApplicationLifetime lifetime)
