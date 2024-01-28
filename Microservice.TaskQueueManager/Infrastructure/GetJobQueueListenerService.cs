@@ -20,9 +20,6 @@ public class GetJobQueueListenerService
 
     private readonly RabbitMQService _rabbitMQ;
 
-    private IModel? _requestChannel;
-    private IModel? _responseChannel;
-
     public int _activeJobs { get; set; }
 
     public GetJobQueueListenerService(
@@ -32,12 +29,6 @@ public class GetJobQueueListenerService
     {
         _logger = logger;
         _rabbitMQ = rabbitMQ;
-        _requestChannel = _rabbitMQ.GetConnection();
-        _responseChannel = _rabbitMQ.GetConnection();
-        _requestChannel.ExchangeDeclare(exchange: _rabbitMQ.exchange, type: ExchangeType.Direct);
-        _responseChannel.ExchangeDeclare(exchange: _rabbitMQ.exchange, type: ExchangeType.Direct);
-        _requestChannel.QueueDeclare(queue: _rabbitMQ.QueueRequestReadyJob, durable: false, exclusive: false, autoDelete: false, arguments: null);
-        _responseChannel.QueueDeclare(queue: _rabbitMQ.QueueRespondReadyJob, durable: false, exclusive: false, autoDelete: false, arguments: null);
         SetupResponseListener(lifetime.ApplicationStopping);
     }
 
@@ -45,13 +36,16 @@ public class GetJobQueueListenerService
     {
         try
         {
+            const string message = "THIS IS A STEST";
+            var body = Encoding.UTF8.GetBytes(message);
+
             var options = MessagePackSerializerOptions.Standard.WithResolver(ContractlessStandardResolver.Instance);
             var requestSerialized = MessagePackSerializer.Serialize(jobRequest, options);
-            _requestChannel.BasicPublish(
+            _rabbitMQ.GetRequestReadyJobQueue.BasicPublish(
                 exchange: _rabbitMQ.exchange,
-                routingKey: _rabbitMQ.QueueRequestReadyJob,
+                routingKey: _rabbitMQ.RequestReadyJobName,
                 basicProperties: null,
-                body: requestSerialized);
+                body: body);
         }
         catch (Exception ex)
         {
@@ -61,7 +55,7 @@ public class GetJobQueueListenerService
 
     private void SetupResponseListener(CancellationToken cancellationToken)
     {
-        var responseConsumer = new EventingBasicConsumer(_responseChannel);
+        var responseConsumer = new EventingBasicConsumer(_rabbitMQ.GetRespondReadyJobQueue);
         responseConsumer.Received += async (model, ea) =>
         {
             try
@@ -77,7 +71,7 @@ public class GetJobQueueListenerService
                 _logger.LogError(ex, "Error in GetJobQueueService response listener");
             }
         };
-        _responseChannel.BasicConsume(queue: _rabbitMQ.QueueRespondReadyJob, autoAck: true, consumer: responseConsumer);
+        _rabbitMQ.GetRespondReadyJobQueue.BasicConsume(queue: _rabbitMQ.RespondReadyJobName, autoAck: true, consumer: responseConsumer);
     }
 
     private async Task SimulateWork(JobResponse jobResponse)

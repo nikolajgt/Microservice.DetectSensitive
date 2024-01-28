@@ -28,14 +28,13 @@ internal class JobFinishedQueueListenerService : IDisposable
         _logger = logger;
         _rabbitMQ = rabbitMQ;
         _jobSchedulerService = jobSchedulerService;
-        _responseChannel = _rabbitMQ.GetConnection();
         SetupJobFinishedResponseListener(lifetime.ApplicationStopping);
     }
 
 
     private void SetupJobFinishedResponseListener(CancellationToken cancellationToken)
     {
-        var consumer = new EventingBasicConsumer(_responseChannel);
+        var consumer = new EventingBasicConsumer(_rabbitMQ.GetFinishedReadyJobQueue);
         consumer.Received += async (model, ea) =>
         {
             try
@@ -58,7 +57,7 @@ internal class JobFinishedQueueListenerService : IDisposable
                 _logger.LogError(ex, "Error in JobFinishedQueueService SetupRequestAndResponseListener");
             }
         };
-        _responseChannel.BasicConsume(queue: _rabbitMQ.QueueRespondFinishedJob, autoAck: true, consumer: consumer);
+        _responseChannel.BasicConsume(queue: _rabbitMQ.RespondFinishedJobName, autoAck: true, consumer: consumer);
     }
 
 

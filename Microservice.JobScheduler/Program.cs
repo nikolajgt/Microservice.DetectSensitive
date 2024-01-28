@@ -13,7 +13,6 @@ await new HostBuilder()
     .UseEnvironment(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development")
     .ConfigureAppConfiguration(ConfigureAppConfiguration)
     .ConfigureServices(ConfigureServices)
-
     .Build()
     .RunAsync();
 
@@ -43,7 +42,6 @@ static void ConfigureServices(
         {
             configure.ClearProviders();
             configure.AddSerilog(dispose: true);
-            configure.AddFilter<EventLogLoggerProvider>(level => level >= LogLevel.Critical);
         });
 
 
