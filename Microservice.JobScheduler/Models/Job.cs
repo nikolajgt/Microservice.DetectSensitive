@@ -17,7 +17,7 @@ public class Job : BaseEntity
     public IEnumerable<JobHistory> History { get; set; }
 
 
-
+    public Job() { }
     public Job(
         string jobName,
         JobType jobType,

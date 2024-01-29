@@ -30,6 +30,7 @@ static void ConfigureServices(
 {
     Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(context.Configuration)
+    .WriteTo.Console()
     .CreateLogger();
 
     services

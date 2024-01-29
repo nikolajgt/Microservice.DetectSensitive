@@ -21,4 +21,6 @@ public class Source : BaseEntity
     [Display(Name = "Jobs", Description = "See which jobs that use this source")]
     public IEnumerable<Job>? Jobs { get; set; }
 
+    public Source() { }
+
 }

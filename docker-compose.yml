@@ -15,7 +15,8 @@ services:
       context: .
       dockerfile: Microservice.JobScheduler/Dockerfile
     environment:
-      - ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;User Id=DockerUser;Password=DockerUser;Initial Catalog=Jobscheduler;MultipleActiveResultSets=true;TrustServerCertificate=true;
+      - 'ASPNETCORE_ENVIRONMENT=Development'
+      - 'ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;User Id=DockerUser;Password=DockerUser;Initial Catalog=Jobscheduler;MultipleActiveResultSets=true;TrustServerCertificate=true;'
    
   microservice.taskqueuemanager:
     image: ${DOCKER_REGISTRY-}microservicetaskqueuemanager

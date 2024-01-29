@@ -19,10 +19,16 @@ public partial class DatabaseService
         {
             await connection.OpenAsync(cancellationToken);
 
-            var response = await connection.QueryAsync<Job>(@"
-                SELECT Id, JobName, JobType, JobStatus, PathToHarvest, CronSchedule, LastRun
-                FROM Harvester.Jobs;
-            ", cancellationToken) ?? new List<Job>();
+            var response = await connection.QueryAsync<Job, Source, Job>(@"
+                SELECT j.Id, j.JobName, j.JobType, j.JobStatus, j.SourceId, j.CronSchedule, j.Force, j.LastRun,
+                       s.Id, s.Address, s.ObjectSid, s.Type, s.itemsCount
+                FROM dbo.Jobs j
+                INNER JOIN dbo.Sources s ON j.SourceId = s.Id;
+            ", (job, source) =>
+            {
+                job.Source = source;
+                return job;
+            }, splitOn: "Id") ?? new List<Job>();
 
             await connection.CloseAsync();
             return response;
@@ -43,7 +49,7 @@ public partial class DatabaseService
         {
             await connection.OpenAsync(cancellationToken);
 
-            var insertQuery = @"INSERT INTO Harvester.JobHistories (Id, JobId, JobStatus, Started, Finished)
+            var insertQuery = @"INSERT INTO dbo.JobHistories (Id, JobId, JobStatus, Started, Finished)
                                 VALUES (@Id, @JobId, @JobStatus, @Started, @Finished);";
 
             await connection.ExecuteAsync(
@@ -77,7 +83,7 @@ public partial class DatabaseService
         {
             await connection.OpenAsync(cancellationToken);
 
-            var updateQuery = @"UPDATE Harvester.JobHistories 
+            var updateQuery = @"UPDATE dbo.JobHistories 
                     SET Finished = @Finished, 
                         Failed = @Failed 
                     WHERE Id = @Id;";

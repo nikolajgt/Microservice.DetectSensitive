@@ -37,7 +37,7 @@ public class RabbitMQService
             {
                 retryCount--;
                 Console.WriteLine("Connection failed, retrying...");
-                Thread.Sleep(5000); // Wait for 5 seconds before retrying
+                Task.Delay(5000); // Wait for 5 seconds before retrying
             }
         }
 
