@@ -86,6 +86,7 @@ public class QueueService
         var GetActiveHarvesterCount = 1;
         if (GetActiveHarvesterCount * tasksBufferMultiplyer > _taskWorkJobsQueue.Count)
         {
+            _listener.TestSender();
             _listener.SendJobRequestAsync(new Domain.JobRequest
             {
                 HarvesterType = Domain.Base.Enums.HarvesterType.FileSystem

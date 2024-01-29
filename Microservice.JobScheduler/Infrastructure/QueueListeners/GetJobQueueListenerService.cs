@@ -31,8 +31,33 @@ public class GetJobQueueListenerService
         _rabbitMQ = rabbitMQ;
         _jobSchedulerService = jobSchedulerService;
         SetupRequestAndResponseListener(lifetime.ApplicationStopping);
+        TestListener(lifetime.ApplicationStopping);
     }
 
+
+    private void TestListener(CancellationToken cancellationToken)
+    {
+        using var channel = _rabbitMQ.GetConnection();
+
+        channel.QueueDeclare(queue: "hello",
+                             durable: false,
+                             exclusive: false,
+                             autoDelete: false,
+                             arguments: null);
+
+        Console.WriteLine(" [*] Waiting for messages.");
+
+        var consumer = new EventingBasicConsumer(channel);
+        consumer.Received += (model, ea) =>
+        {
+            var body = ea.Body.ToArray();
+            var message = Encoding.UTF8.GetString(body);
+            _logger.LogInformation($" [x] Received {message}");
+        };
+        channel.BasicConsume(queue: "hello",
+                             autoAck: true,
+                             consumer: consumer);
+    }
 
     private void SetupRequestAndResponseListener(CancellationToken cancellationToken)
     {

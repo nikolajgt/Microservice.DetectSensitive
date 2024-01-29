@@ -32,6 +32,24 @@ public class GetJobQueueListenerService
         SetupResponseListener(lifetime.ApplicationStopping);
     }
 
+    public void TestSender()
+    {
+        var channel = _rabbitMQ.GetConnection();
+        channel.QueueDeclare(queue: "hello",
+              durable: false,
+              exclusive: false,
+              autoDelete: false,
+              arguments: null);
+
+        const string message = "THIS IS A STEST";
+        var body = Encoding.UTF8.GetBytes(message);
+
+        channel.BasicPublish(exchange: string.Empty,
+                             routingKey: "hello",
+                             basicProperties: null,
+                             body: body);
+    }
+
     public void SendJobRequestAsync(JobRequest jobRequest)
     {
         try
