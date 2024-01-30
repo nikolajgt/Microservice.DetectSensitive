@@ -1,14 +1,4 @@
-﻿using MessagePack;
-using Microservice.Domain;
-using Microservice.Domain.Base.Enums;
-using Microservice.JobScheduler.Application.Validation;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
-using System.IO;
-using System.Threading.Channels;
-
+﻿using RabbitMQ.Client;
 
 namespace Microservice.JobScheduler.Infrastructure;
 
@@ -16,9 +6,9 @@ public class RabbitMQService
 {
     private readonly ILogger<RabbitMQService> _logger;
     private readonly IConnection _connection;
-    public IModel? GetRequestReadyJobQueue { get; }
-    public IModel? GetRespondReadyJobQueue { get; }
-    public IModel? GetFinishedReadyJobQueue { get; }
+    public IChannel? GetRequestReadyJobQueue { get; }
+    public IChannel? GetRespondReadyJobQueue { get; }
+    public IChannel? GetFinishedReadyJobQueue { get; }
 
     public string exchange { get; } = "DataHarvest";
     public string RequestReadyJobName { get; } = "DataHarvest_RequestReadyJob";
@@ -51,23 +41,23 @@ public class RabbitMQService
 
             }
         }
-        GetRequestReadyJobQueue = _connection.CreateModel();
-        GetRespondReadyJobQueue = _connection.CreateModel();
-        GetFinishedReadyJobQueue = _connection.CreateModel();
+        //GetRequestReadyJobQueue = _connection.CreateChannelAsync();
+        //GetRespondReadyJobQueue = _connection.CreateChannelAsync();
+        //GetFinishedReadyJobQueue = _connection.CreateChannelAsync();
 
-        GetRequestReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
-        GetRespondReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
-        GetFinishedReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
+        //GetRequestReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
+        //GetRespondReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
+        //GetFinishedReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
 
-        GetRequestReadyJobQueue.QueueDeclare(queue: RequestReadyJobName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-        GetRespondReadyJobQueue.QueueDeclare(queue: RespondReadyJobName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-        GetFinishedReadyJobQueue.QueueDeclare(queue: RespondFinishedJobName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-
+        
+        
+        //GetFinishedReadyJobQueue.QueueDeclare(queue: RespondFinishedJobName, durable: false, exclusive: false, autoDelete: false, arguments: null);
     }
 
-    public IModel GetConnection()
+    public async Task<IChannel> CreateChannelAsync()
     {
-        return _connection.CreateModel();
+        return await _connection.CreateChannelAsync();
     }
+
 
 }

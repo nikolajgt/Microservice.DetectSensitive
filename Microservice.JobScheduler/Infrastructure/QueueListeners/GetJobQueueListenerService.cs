@@ -13,12 +13,16 @@ public class GetJobQueueListenerService
 {
     private readonly ILogger<GetJobQueueListenerService> _logger;
 
-    private readonly JobRequestValidator _jobRequestValidator = new JobRequestValidator();
-    private readonly JobResponseValidator _jobResponseValidator = new JobResponseValidator();
+
     private readonly JobFinishedResponseValidator _jobSendResponseValidator = new JobFinishedResponseValidator();
 
     private readonly JobSchedulerService _jobSchedulerService;
     private readonly RabbitMQService _rabbitMQ;
+
+    private readonly IChannel ReciveJobRequest;
+    private readonly IChannel SendJobRequest;
+    private readonly IChannel ReciveFinishedJob;
+    private readonly IChannel TestListener;
 
 
     public GetJobQueueListenerService(
@@ -31,30 +35,25 @@ public class GetJobQueueListenerService
         _rabbitMQ = rabbitMQ;
         _jobSchedulerService = jobSchedulerService;
         SetupRequestAndResponseListener(lifetime.ApplicationStopping);
-        TestListener(lifetime.ApplicationStopping);
     }
 
 
-    private void TestListener(CancellationToken cancellationToken)
+    private async Task TestListenerFunc(CancellationToken cancellationToken)
     {
-        using var channel = _rabbitMQ.GetConnection();
-
-        channel.QueueDeclare(queue: "hello",
+        await TestListener.QueueDeclareAsync(queue: "hello",
                              durable: false,
                              exclusive: false,
                              autoDelete: false,
                              arguments: null);
 
-        Console.WriteLine(" [*] Waiting for messages.");
-
-        var consumer = new EventingBasicConsumer(channel);
+        var consumer = new EventingBasicConsumer(TestListener);
         consumer.Received += (model, ea) =>
         {
             var body = ea.Body.ToArray();
             var message = Encoding.UTF8.GetString(body);
             _logger.LogInformation($" [x] Received {message}");
         };
-        channel.BasicConsume(queue: "hello",
+        TestListener.BasicConsumeAsync(queue: "hello",
                              autoAck: true,
                              consumer: consumer);
     }
