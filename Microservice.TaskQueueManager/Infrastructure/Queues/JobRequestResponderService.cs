@@ -79,8 +79,8 @@ public class JobRequestResponderService : BackgroundService, IJobRequestResponde
             _jobRequestQueue = await _rabbitMQ.CreateChannelAsync();
             _jobRespondQueue = await _rabbitMQ.CreateChannelAsync();
 
-            //_jobRequestQueue.ExchangeDeclare(exchange: "DataHarvest", type: "direct");
-            //_jobRespondQueue.ExchangeDeclare(exchange: "DataHarvest", type: "direct");
+            _jobRequestQueue.ExchangeDeclare(exchange: "DataHarvest", type: "direct");
+            _jobRespondQueue.ExchangeDeclare(exchange: "DataHarvest", type: "direct");
 
             await _jobRequestQueue.QueueDeclareAsync(
                 queue: _rabbitMQ.RequestReadyJobName,

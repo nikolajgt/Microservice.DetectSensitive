@@ -7,12 +7,15 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly JobSchedulerService _jobSchedulerService;
+    private readonly JobRequestResponderService _jobRequestResponder;
 
     public Worker(
         ILogger<Worker> logger,
-        JobSchedulerService jobSchedulerService)
+        JobSchedulerService jobSchedulerService,
+        JobRequestResponderService jobRequestResponder)
     {
         _jobSchedulerService = jobSchedulerService;
+        _jobRequestResponder = jobRequestResponder;
         _logger = logger;
     }
 
@@ -28,9 +31,7 @@ public class Worker : BackgroundService
                 {
                     var jobs = _jobSchedulerService.GetAciveJobs();
                     foreach (var job in jobs)
-                    {
                         _logger.LogInformation("Job history id: {jobhistoryid} is running", job.Id);
-                    }
                 }
                 await Task.Delay(5000, stoppingToken);
             }
