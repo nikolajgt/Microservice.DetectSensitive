@@ -3,11 +3,7 @@ using Microservice.Domain;
 using Microservice.JobScheduler.Application.Validation;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Microservice.JobScheduler.Infrastructure.QueueListeners;
 
@@ -23,9 +19,6 @@ internal class JobRequestResponderService : BackgroundService
     private IChannel? _jobRequestQueue;
     private IChannel? _jobRespondQueue;
 
-
-
-
     public JobRequestResponderService(
         ILogger<JobRequestResponderService> logger,
         RabbitMQService rabbitMQ,
@@ -38,15 +31,13 @@ internal class JobRequestResponderService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        // init on start up
         await SetupQueues();
-
         await SetupJobRequestResponderAsync(cancellationToken);
     }
 
     private async Task SetupJobRequestResponderAsync(CancellationToken cancellationToken)
     {
-        var consumer = new EventingBasicConsumer(_rabbitMQ.GetRequestReadyJobQueue);
+        var consumer = new EventingBasicConsumer(_jobRequestQueue);
         consumer.Received += async (model, ea) =>
         {
             try
@@ -111,28 +102,31 @@ internal class JobRequestResponderService : BackgroundService
     {
         try
         {
+            _jobRequestQueue = await _rabbitMQ.CreateChannelAsync();
+            _jobRespondQueue = await _rabbitMQ.CreateChannelAsync();
 
-        }catch (Exception ex)
+            //_jobRequestQueue.ExchangeDeclare(exchange: "DataHarvest", type: "direct");
+            //_jobRespondQueue.ExchangeDeclare(exchange: "DataHarvest", type: "direct");
+
+            await _jobRequestQueue.QueueDeclareAsync(
+                queue: _rabbitMQ.RequestReadyJobName,
+                durable: false,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+
+            await _jobRespondQueue.QueueDeclareAsync(
+                queue: _rabbitMQ.RespondReadyJobName,
+                durable: false,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null);
+        }
+        catch (Exception ex)
         {
             _logger.LogError(ex, "Setup Queues failing, can get connection/queue to rabbitmq: Function {function} in Class {class}",
                 nameof(SetupQueues),
                 nameof(JobRequestResponderService));
         }
-        _jobRequestQueue = await _rabbitMQ.CreateChannelAsync();
-        _jobRespondQueue = await _rabbitMQ.CreateChannelAsync();
-
-        await _jobRequestQueue.QueueDeclareAsync(
-            queue: _rabbitMQ.RequestReadyJobName, 
-            durable: false, 
-            exclusive: false, 
-            autoDelete: false, 
-            arguments: null);
-
-        await _jobRespondQueue.QueueDeclareAsync(
-            queue: _rabbitMQ.RespondReadyJobName,
-            durable: false, 
-            exclusive: false, 
-            autoDelete: false,
-            arguments: null);
     }
 }

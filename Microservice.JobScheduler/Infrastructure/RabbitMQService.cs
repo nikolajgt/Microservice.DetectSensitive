@@ -6,9 +6,6 @@ public class RabbitMQService
 {
     private readonly ILogger<RabbitMQService> _logger;
     private readonly IConnection _connection;
-    public IChannel? GetRequestReadyJobQueue { get; }
-    public IChannel? GetRespondReadyJobQueue { get; }
-    public IChannel? GetFinishedReadyJobQueue { get; }
 
     public string exchange { get; } = "DataHarvest";
     public string RequestReadyJobName { get; } = "DataHarvest_RequestReadyJob";
@@ -36,22 +33,11 @@ public class RabbitMQService
             catch
             {
                 retryCount--;
-                Console.WriteLine("Connection failed, retrying...");
+                logger.LogError("Connection failed, retrying...");
                 Task.Delay(5000); // Wait for 5 seconds before retrying
 
             }
         }
-        //GetRequestReadyJobQueue = _connection.CreateChannelAsync();
-        //GetRespondReadyJobQueue = _connection.CreateChannelAsync();
-        //GetFinishedReadyJobQueue = _connection.CreateChannelAsync();
-
-        //GetRequestReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
-        //GetRespondReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
-        //GetFinishedReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
-
-        
-        
-        //GetFinishedReadyJobQueue.QueueDeclare(queue: RespondFinishedJobName, durable: false, exclusive: false, autoDelete: false, arguments: null);
     }
 
     public async Task<IChannel> CreateChannelAsync()

@@ -8,6 +8,7 @@ namespace Microservice.Domain.Base.Enums;
 
 public enum HarvesterType
 {
+    None,
     Exchange,
     FileSystem
 }

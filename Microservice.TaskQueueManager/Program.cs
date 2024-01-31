@@ -1,6 +1,10 @@
+using Microservice.Domain;
 using Microservice.TaskDistributor;
+using Microservice.TaskManagQueueManager.Application.IServices;
 using Microservice.TaskManagQueueManager.Infrastructure;
+using Microservice.TaskManagQueueManager.Infrastructure.Queues;
 using Microservice.TaskQueueManage.Infrastructure;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.EventLog;
 using Serilog;
 
@@ -42,9 +46,11 @@ static void ConfigureServices(
 
     services.AddSingleton<RabbitMQService>();
     services.AddSingleton<QueueService>();
-    services.AddSingleton<GetJobQueueListenerService>();
-    services.AddHostedService<Worker>();
 
+    
+    services.AddSingleton<IJobRequestResponderService, JobRequestResponderService>();
+    services.AddHostedService(provider => provider.GetService<IJobRequestResponderService>() as JobRequestResponderService );
+    
     services.AddHostedService<Worker>();
 }
 

@@ -10,8 +10,7 @@ public class Worker : BackgroundService
 
     public Worker(
         ILogger<Worker> logger,
-        JobSchedulerService jobSchedulerService,
-         GetJobQueueListenerService listner)
+        JobSchedulerService jobSchedulerService)
     {
         _jobSchedulerService = jobSchedulerService;
         _logger = logger;
@@ -33,7 +32,7 @@ public class Worker : BackgroundService
                         _logger.LogInformation("Job history id: {jobhistoryid} is running", job.Id);
                     }
                 }
-                await Task.Delay(1000, stoppingToken);
+                await Task.Delay(5000, stoppingToken);
             }
             catch(Exception ex)
             {

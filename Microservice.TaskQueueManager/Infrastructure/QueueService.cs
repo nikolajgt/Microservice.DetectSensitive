@@ -1,4 +1,5 @@
-﻿using Microservice.Domain.Models.TaskQueueManager;
+﻿using Microservice.Domain.Base.Enums;
+using Microservice.Domain.Models.TaskQueueManager;
 using Microservice.TaskManagQueueManager.Models;
 using Microservice.TaskQueueManage.Infrastructure;
 using System.Collections.Concurrent;
@@ -9,7 +10,6 @@ namespace Microservice.TaskManagQueueManager.Infrastructure;
 public class QueueService
 {
     private readonly ILogger<QueueService> _logger;
-    private readonly GetJobQueueListenerService _listener;
     // way to tie jobhistoryid to the taskwork that contains tasks
     // tasks from each of these will get removed when starting so at some point
     // no tasks is in the TaskWorkJob and it is completed by checking max created count
@@ -33,17 +33,14 @@ public class QueueService
     // number of tasks in all of _activeTaskWorkJobs
     private const int tasksBufferMultiplyer = 2;
     public QueueService(
-        ILogger<QueueService> logger,
-        RabbitMQService rabbitService,
-        GetJobQueueListenerService listener)
+        ILogger<QueueService> logger)
     { 
         _logger = logger;
-        _queueConfig = new QueueConfig(Domain.Base.Enums.HarvesterType.FileSystem, string.Empty, 3);
+        _queueConfig = new QueueConfig(HarvesterType.FileSystem, string.Empty, 3);
         _activeTaskWorkJobs = new ConcurrentDictionary<Guid, TaskWorkJob>();
         _activeTasks = new HashSet<TaskWorkRequest>();
         _taskWorkJobsQueue = new Queue<TaskWorkJob>();
         _retryQueue = new Queue<TaskWorkRequest>();
-        _listener = listener;
     }
 
     private async Task StartNextTask()
@@ -81,18 +78,16 @@ public class QueueService
         }
     }
 
-    public async Task<bool> IsTimeForNextJob()
+    public bool IsTimeForNextJob(out HarvesterType harvesterType)
     {
         var GetActiveHarvesterCount = 1;
         if (GetActiveHarvesterCount * tasksBufferMultiplyer > _taskWorkJobsQueue.Count)
         {
-            _listener.TestSender();
-            _listener.SendJobRequestAsync(new Domain.JobRequest
-            {
-                HarvesterType = Domain.Base.Enums.HarvesterType.FileSystem
-            });
+            harvesterType = HarvesterType.FileSystem;
             return true;
         }
+
+        harvesterType = HarvesterType.None;
         return false;
     }
 

@@ -5,11 +5,7 @@ namespace Microservice.TaskQueueManage.Infrastructure;
 public class RabbitMQService
 {
     private readonly ILogger<RabbitMQService> _logger;
-    private readonly IConnection _connection;
-
-    public IModel? GetRequestReadyJobQueue { get; }
-    public IModel? GetRespondReadyJobQueue { get; }
-    public IModel? GetFinishedReadyJobQueue { get; }
+    private IConnection? _connection;
 
     public string exchange { get; } = "DataHarvest";
     public string RequestReadyJobName { get; } = "DataHarvest_RequestReadyJob";
@@ -17,13 +13,13 @@ public class RabbitMQService
     public string RespondFinishedJobName { get; } = "DataHarvest_RespondFinishedJob";
 
     public RabbitMQService(
-        ILogger<RabbitMQService> logger,
-        IHostApplicationLifetime lifetime)
+        ILogger<RabbitMQService> logger)
     {
         _logger = logger;
         var connectionFactory = new ConnectionFactory
         {
             HostName = "rabbitmq", // RabbitMQ server host
+
         };
         int retryCount = 5;
         while (retryCount > 0)
@@ -36,28 +32,23 @@ public class RabbitMQService
             catch
             {
                 retryCount--;
-                Console.WriteLine("Connection failed, retrying...");
+                logger.LogError("Connection failed, retrying...");
                 Task.Delay(5000); // Wait for 5 seconds before retrying
+
             }
         }
-
-        GetRequestReadyJobQueue = _connection.CreateModel();
-        GetRespondReadyJobQueue = _connection.CreateModel();
-        GetFinishedReadyJobQueue = _connection.CreateModel();
-
-        GetRequestReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
-        GetRespondReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
-        GetFinishedReadyJobQueue.ExchangeDeclare(exchange: exchange, type: ExchangeType.Direct);
-
-        GetRequestReadyJobQueue.QueueDeclare(queue: RequestReadyJobName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-        GetRespondReadyJobQueue.QueueDeclare(queue: RespondReadyJobName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-        GetFinishedReadyJobQueue.QueueDeclare(queue: RespondFinishedJobName, durable: false, exclusive: false, autoDelete: false, arguments: null);
-
     }
 
-    public IModel GetConnection()
+
+
+    public async Task<IChannel> CreateChannelAsync()
     {
-        return _connection.CreateModel();
+        return await _connection.CreateChannelAsync();
     }
 
+    public IChannel CreateChannel()
+    {
+
+        return _connection.CreateChannel();
+    }
 }

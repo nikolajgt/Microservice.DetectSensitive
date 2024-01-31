@@ -69,17 +69,17 @@ public class JobSchedulerService
         try
         {
             var nextJob = _jobQueue
-           .Where(x => x.JobType.IsExchangeOrFileSystem() == harvesterType)
-           .OrderByDescending(j => j.Force)
-           .ThenBy(j => j.LastRun)
-           .Select(j =>
-           {
-               j.LastRun = DateTime.UtcNow;
-               j.JobStatus = JobStatus.Processing;
-               j.Force = false;
-               return new JobHistory(j);
-           })
-           .FirstOrDefault();
+               .Where(x => x.JobType.IsExchangeOrFileSystem() == harvesterType)
+               .OrderByDescending(j => j.Force)
+               .ThenBy(j => j.LastRun)
+               .Select(j =>
+               {
+                   j.LastRun = DateTime.UtcNow;
+                   j.JobStatus = JobStatus.Processing;
+                   j.Force = false;
+                   return new JobHistory(j);
+               })
+               .FirstOrDefault();
 
             if (nextJob is null)
             {

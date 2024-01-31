@@ -1,5 +1,6 @@
 using Microservice;
 using Microservice.JobScheduler;
+
 using Microservice.JobScheduler.Infrastructure;
 using Microservice.JobScheduler.Infrastructure.Database;
 using Microservice.JobScheduler.Infrastructure.QueueListeners;
@@ -46,8 +47,11 @@ static void ConfigureServices(
     services.AddSingleton<JobSchedulerConfig>();
     services.AddSingleton<RabbitMQService>();
     services.AddTransient<DatabaseService>();
+
     services.AddSingleton<JobSchedulerService>();
-    services.AddSingleton<GetJobQueueListenerService>();
+
+    services.AddSingleton<JobRequestResponderService>();
+    services.AddHostedService(provider => provider.GetService<JobRequestResponderService>());
 
     services.AddHostedService<Worker>();
 }

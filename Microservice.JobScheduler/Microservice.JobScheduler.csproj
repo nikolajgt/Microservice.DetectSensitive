@@ -26,4 +26,8 @@
   <ItemGroup>
     <ProjectReference Include="..\Microservice.Domain\Microservice.Domain.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Application\IServices\" />
+  </ItemGroup>
 </Project>
